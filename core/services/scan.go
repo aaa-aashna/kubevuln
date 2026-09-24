@@ -492,7 +492,7 @@ func (s *ScanService) ScanCVE(ctx context.Context) error {
 		if !s.sbomGeneration && sbom.Content == nil {
 			logger.L().Ctx(ctx).Warning("missing SBOM",
 				helpers.String("imageSlug", workload.ImageSlug))
-			return domain.ErrMissingSBOM
+			return &domain.ScanError{Reason: scanfailure.ReasonUnexpected, Err: domain.ErrMissingSBOM}
 		}
 
 		// do not process timed out SBOM
@@ -1035,7 +1035,8 @@ func parseAuthorityFromServerAddress(serverAddress string) string {
 	// letters. Treating http-registry.internal as a URL sends it to url.Parse, which
 	// returns an empty Host for a string with no scheme, so the whole thing came back
 	// as the authority with its path still attached and matched no registry.
-	if !strings.HasPrefix(serverAddress, "http://") && !strings.HasPrefix(serverAddress, "https://") {
+	lower := strings.ToLower(serverAddress)
+	if !strings.HasPrefix(lower, "http://") && !strings.HasPrefix(lower, "https://") {
 		res, _, _ := strings.Cut(serverAddress, "/")
 		return res
 	}

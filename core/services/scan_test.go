@@ -1624,6 +1624,9 @@ func Test_parseAuthorityFromServerAddress(t *testing.T) {
 	// address came back with its path still attached and matched no registry.
 	assert.Equal(t, "http-registry.internal", parseAuthorityFromServerAddress("http-registry.internal/v2/"))
 	assert.Equal(t, "httpsregistry.example.com", parseAuthorityFromServerAddress("httpsregistry.example.com/v2/"))
+	assert.Equal(t, "index.docker.io", parseAuthorityFromServerAddress("HTTPS://index.docker.io/v1/"))
+	assert.Equal(t, "registry.example.com", parseAuthorityFromServerAddress("HTTP://registry.example.com/v2/"))
+	assert.Equal(t, "quay.io:5000", parseAuthorityFromServerAddress("HttPs://quay.io:5000/v2/"))
 }
 
 // The auth field is the canonical one; username and password are supplementary and an entry
@@ -3605,6 +3608,9 @@ func TestScanService_MissingSBOM_NoFlowScansANilSBOM(t *testing.T) {
 		err = s.ScanRegistry(ctx)
 
 		assert.ErrorIs(t, err, domain.ErrMissingSBOM)
+		var scanErr *domain.ScanError
+		require.ErrorAs(t, err, &scanErr)
+		assert.Equal(t, scanfailure.ReasonUnexpected, scanErr.Reason)
 		assert.Empty(t, scanner.got, "no SBOM may reach the CVE scanner when none was produced")
 	})
 
@@ -3621,6 +3627,9 @@ func TestScanService_MissingSBOM_NoFlowScansANilSBOM(t *testing.T) {
 		err = s.ScanCVE(ctx)
 
 		assert.ErrorIs(t, err, domain.ErrMissingSBOM)
+		var scanErr *domain.ScanError
+		require.ErrorAs(t, err, &scanErr)
+		assert.Equal(t, scanfailure.ReasonUnexpected, scanErr.Reason)
 		assert.Empty(t, scanner.got, "no SBOM may reach the CVE scanner when none was produced")
 	})
 }
